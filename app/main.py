@@ -1,11 +1,17 @@
+from altair import Data, DataFormat, Datasets
+from sklearn import datasets
 import streamlit as st # streamlit application used to create- integrates the model(backend) with the frontend
 import pickle # for perfomance 
 import pandas as pd
 import plotly.graph_objects as go
 import numpy as np
+import altair as alt
+
 
 # function to fetch the cleaned data of the model
+
 def get_clean_data():
+
   data = pd.read_csv("data/data.csv")
   
   data = data.drop(['Unnamed: 32', 'id'], axis=1)
@@ -21,7 +27,7 @@ def add_sidebar():
 
   data = get_clean_data()
 
-# sliding function for the independent variables 
+# sliding function for the independent variables(labels)
 slider_labels = [
         ("Radius (mean)", "radius_mean"),
         ("Texture (mean)", "texture_mean"),
@@ -55,7 +61,12 @@ slider_labels = [
         ("Fractal dimension (worst)", "fractal_dimension_worst"),
     ]
 
-
+for label , key in slider_labels:
+  st.sidebar.slider(
+    label, 
+    min_value=float(0),
+    max_value=float([key].max())
+  )
 
 
 def main(): 
