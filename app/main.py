@@ -67,14 +67,13 @@ input_dict = {}
 for label, key in slider_labels:
     input_dict[key] = st.sidebar.slider(
       label, # first value in slider_lables
-      
-       
       min_value=float(0),  # minimum value of a label
       max_value=float(data[key].max()), # maximum value of a label
       value=float(data[key].mean())
     )
     
-return input_dict      
+
+return input_dict
 
 def main(): 
   st.set_page_config( # page layout and configuration- the title heading and sections 
@@ -85,6 +84,7 @@ def main():
   )
 
 input_data = add_sidebar()
+
 
 with st.container(): #container for a component
      st.title("Breast Cancer Diagnosis Predictor") #title 
