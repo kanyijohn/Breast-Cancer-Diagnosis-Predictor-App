@@ -4,7 +4,7 @@ import pandas as pd
 import plotly.graph_objects as go
 import numpy as np
 
-# function to fetch the cleaned data of the model
+# function to fetch the cleaned data of the model (we need clean data for the sidebar component which has the independent variables)
 def get_clean_data():
   data = pd.read_csv("data/data.csv")
   
@@ -17,11 +17,12 @@ def get_clean_data():
 
 # sidebar component for input data(cell measurements)
 def add_sidebar():
-  st.sidebar.header("Cell Nuclei Measurements")
 
-data = get_clean_data()
+  st.sidebar.header ("Cell Nuclei Measurements")
 
-# sliding function for the independent variables 
+data = get_clean_data() # calling the already cleaned data into the sidebar for the independent variables
+
+# sliding function for the independent variables (columns) each with a label
 slider_labels = [
         ("Radius (mean)", "radius_mean"),
         ("Texture (mean)", "texture_mean"),
@@ -54,27 +55,36 @@ slider_labels = [
         ("Symmetry (worst)", "symmetry_worst"),
         ("Fractal dimension (worst)", "fractal_dimension_worst"),
     ]
-
+       
+   # input dictionary key function used to store the input measurements so as to create the chart and the prediction   
 
 input_dict = {}
+  
+# loop each label for their values
+# the key select the column in the data associated to an independent variable
+# the two values in the above slider_lables list consists of a label and a key consecutively
 
 for label, key in slider_labels:
     input_dict[key] = st.sidebar.slider(
-      label,
-      min_value=float(0),
-      max_value=float(data[key].max()),
+      label, # first value in slider_lables
+      
+       
+      min_value=float(0),  # minimum value of a label
+      max_value=float(data[key].max()), # maximum value of a label
       value=float(data[key].mean())
     )
+    
+return input_dict      
 
 def main(): 
-  st.set_page_config(
+  st.set_page_config( # page layout and configuration- the title heading and sections 
     page_title="Breast Cancer Diagnosis Predictor Application",
     page_icon=":female-doctor:",
     layout="wide",
     initial_sidebar_state="expanded"
   )
 
-add_sidebar()
+input_data = add_sidebar()
 
 with st.container(): #container for a component
      st.title("Breast Cancer Diagnosis Predictor") #title 
