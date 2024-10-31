@@ -1,5 +1,5 @@
-import streamlit as st # streamlit application used to create- integrates the model(backend) with the frontend
-import pickle # for perfomance 
+import streamlit as st
+import pickle
 import pandas as pd
 import plotly.graph_objects as go
 import numpy as np
@@ -17,13 +17,12 @@ def get_clean_data():
 
 # sidebar component for input data(cell measurements)
 def add_sidebar():
-
-  st.sidebar.header ("Cell Nuclei Measurements")
-
-data = get_clean_data() # calling the already cleaned data into the sidebar for the independent variables
-
-# sliding function for the independent variables (columns) each with a label
-slider_labels = [
+  st.sidebar.header("Cell Nuclei Measurements")
+  
+  data = get_clean_data()
+  
+  # sliding function for the independent variables (columns) each with a label
+  slider_labels = [
         ("Radius (mean)", "radius_mean"),
         ("Texture (mean)", "texture_mean"),
         ("Perimeter (mean)", "perimeter_mean"),
@@ -55,57 +54,44 @@ slider_labels = [
         ("Symmetry (worst)", "symmetry_worst"),
         ("Fractal dimension (worst)", "fractal_dimension_worst"),
     ]
-       
-   # input dictionary key function used to store the input measurements so as to create the chart and the prediction   
 
-input_dict = {}
-  
+# input dictionary key function used to store the input measurements so as to create the chart and the prediction 
+  input_dict = {}
+
 # loop each label for their values
 # the key select the column in the data associated to an independent variable
 # the two values in the above slider_lables list consists of a label and a key consecutively
 
-for label, key in slider_labels:
+  for label, key in slider_labels:
     input_dict[key] = st.sidebar.slider(
       label, # first value in slider_lables
-      min_value=float(0),  # minimum value of a label
+      min_value=float(0), # minimum value of a label
       max_value=float(data[key].max()), # maximum value of a label
       value=float(data[key].mean())
     )
     
+  return input_dict
 
-return input_dict
 
-def main(): 
-  st.set_page_config( # page layout and configuration- the title heading and sections 
-    page_title="Breast Cancer Diagnosis Predictor Application",
+def main():
+  st.set_page_config(
+    page_title="Breast Cancer Predictor",
     page_icon=":female-doctor:",
     layout="wide",
     initial_sidebar_state="expanded"
   )
-
+  
 input_data = add_sidebar()
+st.write(input_data)
 
-
-with st.container(): #container for a component
-     st.title("Breast Cancer Diagnosis Predictor") #title 
-     st.write("This application predicts using a machine learning model whether a breast mass is benign or malignant based on the measurements it receives from your cytosis lab. You can also update the measurements by hand using the sliders in the sidebar.") # (st.write) for writing paragaraphs
-
-
+with st.container():
+    st.title("Breast Cancer Predictor")
+    st.write("Please connect this app to your cytology lab to help diagnose breast cancer form your tissue sample. This app predicts using a machine learning model whether a breast mass is benign or malignant based on the measurements it receives from your cytosis lab. You can also update the measurements by hand using the sliders in the sidebar. ")
+  
 col1, col2 = st.columns([4,1]) # creating the columns(first column(chart column) should be 4 times larger than the second column(diagnosis part))
 
-
-
-
-
-
-
-
-
-
-
-
-
-
+  
+ 
 
 
 
