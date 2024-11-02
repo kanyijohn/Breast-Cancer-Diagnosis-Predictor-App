@@ -72,6 +72,22 @@ def add_sidebar():
     
   return input_dict
 
+# scaling the data values
+def get_scaled_values(input_dict):
+  data = get_clean_data()
+  
+  X = data.drop(['diagnosis'], axis=1)
+  
+  scaled_dict = {}  # returning the scaled dictionary
+  
+  # scales the value such that if a value is a minimum/low value then it is close as possible to 0 or if it is high/maximum value then it should be close as possible to 1
+  for key, value in input_dict.items():
+    max_val = X[key].max()
+    min_val = X[key].min()
+    scaled_value = (value - min_val) / (max_val - min_val)
+    scaled_dict[key] = scaled_value
+  
+  return scaled_dict
 
 def main():
   st.set_page_config(
@@ -81,11 +97,14 @@ def main():
     initial_sidebar_state="expanded"
   )
   
-input_data = add_sidebar()
+input_data = add_sidebar() # this returns the data values from the sidebar where there exists dictionary of values(the key) of the independent variables
 
 
 def get_radar_chart (input_data): # function used to get the values(cell measurements) from the dictionary of values- for plot visulaization
+  
+  input_data = get_scaled_values(input_data) # calls the function used for scaling the data values making the radar chart more usable
 
+  # represent the independent variables of the dataset for the 10 values
   categories = ['Radius', 'Texture', 'Perimeter', 'Area', 
                 'Smoothness', 'Compactness', 
                 'Concavity', 'Concave Points',
@@ -93,19 +112,22 @@ def get_radar_chart (input_data): # function used to get the values(cell measure
 
   fig = go.Figure()
 
+  # Mean Value Trace
   fig.add_trace(go.Scatterpolar(
-        r=[
+        r=[ # the radii = mean integer values for the categories( independent variables)
           input_data['radius_mean'], input_data['texture_mean'], input_data['perimeter_mean'],
           input_data['area_mean'], input_data['smoothness_mean'], input_data['compactness_mean'],
           input_data['concavity_mean'], input_data['concave points_mean'], input_data['symmetry_mean'],
           input_data['fractal_dimension_mean']
         ],
-        theta=categories,
-        fill='toself',
-        name='Mean Value'
+        theta=categories, # angular values(categories- the independent variables) listed below
+        fill='toself', # colour for the trace
+        name='Mean Value' # name of the trace (key of the radar chart)
   ))
+
+  # Standard Error Trace
   fig.add_trace(go.Scatterpolar(
-        r=[
+        r=[  # the radii = standard error (se) integer values for the categories( independent variables) listed below
           input_data['radius_se'], input_data['texture_se'], input_data['perimeter_se'], input_data['area_se'],
           input_data['smoothness_se'], input_data['compactness_se'], input_data['concavity_se'],
           input_data['concave points_se'], input_data['symmetry_se'],input_data['fractal_dimension_se']
@@ -114,8 +136,10 @@ def get_radar_chart (input_data): # function used to get the values(cell measure
         fill='toself',
         name='Standard Error'
   ))
+
+  # Worst Value Trace
   fig.add_trace(go.Scatterpolar(
-        r=[
+        r=[ # the radii = worst value (worst) integer values for the categories( independent variables) listed below
           input_data['radius_worst'], input_data['texture_worst'], input_data['perimeter_worst'],
           input_data['area_worst'], input_data['smoothness_worst'], input_data['compactness_worst'],
           input_data['concavity_worst'], input_data['concave points_worst'], input_data['symmetry_worst'],
@@ -130,7 +154,7 @@ def get_radar_chart (input_data): # function used to get the values(cell measure
     polar=dict(
       radialaxis=dict(
         visible=True,
-        range=[0, 1]
+        range=[0, 1] # scaling the data to stadardize the input features (independent variable values) hence make the radar chart visually recognizable and able to analyse
       )),
     showlegend=True
   )
@@ -138,22 +162,23 @@ def get_radar_chart (input_data): # function used to get the values(cell measure
   return fig
 
 
-
+def add_predictions (input_data)
 
 
 with st.container():
-    st.title("Breast Cancer Predictor")
-    st.write("Please connect this app to your cytology lab to help diagnose breast cancer form your tissue sample. This app predicts using a machine learning model whether a breast mass is benign or malignant based on the measurements it receives from your cytosis lab. You can also update the measurements by hand using the sliders in the sidebar. ")
+    st.title("Breast Cancer Diagnosis Predictor")
+    st.write("This application predicts using a machine learning model whether a breast mass is benign or malignant based on the measurements it receives from your cytosis lab. You can also update the measurements by hand using the sliders in the sidebar.")
   
 col1, col2 = st.columns([4,1]) # creating the columns(first column(chart column) should be 4 times larger than the second column(diagnosis prediction part))
 
 # for column 1 for the plot visualization
 with col1: 
-    radar_chart = get_radar_chart(input_data) 
-    st.plotly_chart(radar_chart)
+    radar_chart = get_radar_chart(input_data) # arguments taking the dictionary of values from the sidebar (data input-cell measurements)
+    st.plotly_chart(radar_chart) # passing in the figure element- the figure function
 
 # for column 1 for the cancer prediction
-
+with col2:
+  add_predictions ()
     
  
 
