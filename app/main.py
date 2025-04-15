@@ -186,8 +186,8 @@ def add_predictions(input_data):
 # page configuration- main function 
 def main():
   st.set_page_config(
-    page_title="Breast Cancer Diagnosis Predictor",
-    page_icon=":female-doctor:",
+    page_title="🩺 Breast Cancer Diagnosis Predictor",
+    
     layout="wide",
     initial_sidebar_state="expanded"
   )
