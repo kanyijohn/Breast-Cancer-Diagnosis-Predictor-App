@@ -73,8 +73,8 @@ def login_ui():
             if authenticate_user(email, password):
                 st.session_state["authenticated"] = True
                 st.session_state["user"] = email
-                st.success(f"Welcome {email}!")
-                st.success("Login successful! Please refresh the page manually.")
+                st.success(f"Welcome!")
+                st.success("Login successful!")
                 st.stop()
             else:
                 st.error("Invalid email or password")
@@ -142,26 +142,61 @@ def get_scaled_values(input_dict):
     return scaled_dict
 
 
-def get_radar_chart(input_data):
-    input_data = get_scaled_values(input_data)
-    categories = ['Radius', 'Texture', 'Perimeter', 'Area',
-                  'Smoothness', 'Compactness', 'Concavity', 'Concave Points',
-                  'Symmetry', 'Fractal Dimension']
 
-    fig = go.Figure()
-    fig.add_trace(go.Scatterpolar(
+def get_radar_chart(input_data):
+  
+  input_data = get_scaled_values(input_data)
+  
+  categories = ['Radius', 'Texture', 'Perimeter', 'Area', 
+                'Smoothness', 'Compactness', 
+                'Concavity', 'Concave Points',
+                'Symmetry', 'Fractal Dimension']
+
+  fig = go.Figure()
+
+  fig.add_trace(go.Scatterpolar(
         r=[
-            input_data['radius_mean'], input_data['texture_mean'], input_data['perimeter_mean'],
-            input_data['area_mean'], input_data['smoothness_mean'], input_data['compactness_mean'],
-            input_data['concavity_mean'], input_data['concave points_mean'], input_data['symmetry_mean'],
-            input_data['fractal_dimension_mean']
+          input_data['radius_mean'], input_data['texture_mean'], input_data['perimeter_mean'],
+          input_data['area_mean'], input_data['smoothness_mean'], input_data['compactness_mean'],
+          input_data['concavity_mean'], input_data['concave points_mean'], input_data['symmetry_mean'],
+          input_data['fractal_dimension_mean']
         ],
         theta=categories,
         fill='toself',
-        name='Mean Values'
-    ))
-    fig.update_layout(polar=dict(radialaxis=dict(visible=True, range=[0, 1])), showlegend=True)
-    return fig
+        name='Mean Value'
+  ))
+  fig.add_trace(go.Scatterpolar(
+        r=[
+          input_data['radius_se'], input_data['texture_se'], input_data['perimeter_se'], input_data['area_se'],
+          input_data['smoothness_se'], input_data['compactness_se'], input_data['concavity_se'],
+          input_data['concave points_se'], input_data['symmetry_se'],input_data['fractal_dimension_se']
+        ],
+        theta=categories,
+        fill='toself',
+        name='Standard Error'
+  ))
+  fig.add_trace(go.Scatterpolar(
+        r=[
+          input_data['radius_worst'], input_data['texture_worst'], input_data['perimeter_worst'],
+          input_data['area_worst'], input_data['smoothness_worst'], input_data['compactness_worst'],
+          input_data['concavity_worst'], input_data['concave points_worst'], input_data['symmetry_worst'],
+          input_data['fractal_dimension_worst']
+        ],
+        theta=categories,
+        fill='toself',
+        name='Worst Value'
+  ))
+
+  fig.update_layout(
+    polar=dict(
+      radialaxis=dict(
+        visible=True,
+        range=[0, 1]
+      )),
+    showlegend=True
+  )
+  
+  return fig
 
 
 def add_predictions(input_data):
@@ -171,7 +206,7 @@ def add_predictions(input_data):
     input_array_scaled = scaler.transform(input_array)
     prediction = model.predict(input_array_scaled)
 
-    st.subheader("🔎 Diagnosis Prediction")
+    st.subheader("🔎Diagnosis Prediction")
     if prediction[0] == 0:
         st.success("🟢 Result: Benign")
     else:
@@ -179,7 +214,7 @@ def add_predictions(input_data):
 
     st.info(f"Probability (Benign): {model.predict_proba(input_array_scaled)[0][0]:.2f}")
     st.info(f"Probability (Malignant): {model.predict_proba(input_array_scaled)[0][1]:.2f}")
-    st.caption("Note: This app is for educational purposes and should not replace professional diagnosis.")
+    st.caption("Note: This application is aimed to assist medical professionals in making breast cancer diagnosis, but should not be used as a substitute for a professional diagnosis")
 
 
 # -------------------- MAIN --------------------
@@ -198,22 +233,22 @@ def main():
         if st.button("Logout"):
             st.session_state["authenticated"] = False
             st.session_state["user"] = None
-            st.success("Logged out successfully! Please refresh the page manually.")
+            st.success("Logged out successfully!")
             st.stop()
 
 
     # Load style
     if os.path.exists(STYLE_PATH):
         with open(STYLE_PATH) as f:
-            st.markdown(f"<style>{f.read()}</style>", unsafe_allow_html=True)
-
+             st.markdown("<style>{}</style>".format(f.read()), unsafe_allow_html=True)
+  
     # Main App UI
-    st.title("Breast Cancer Diagnosis Predictor App")
-    st.write("Use the sidebar to input cell measurements collected and receive predictions.")
+    st.title("Breast Cancer Diagnosis")
+    st.write("This app is build to help medical professionals in decision making to diagnose breast cancer in patients. It predicts using a machine learning model whether a breast mass is benign or malignant based on the cell measurements received from a breast tissue. The cell measurements are input and updated by hand using the sliders in the sidebar to receive predictions.")
 
     input_data = add_sidebar()
 
-    col1, col2 = st.columns([3, 1])
+    col1, col2 = st.columns([4, 1])
     with col1:
         st.plotly_chart(get_radar_chart(input_data))
     with col2:
