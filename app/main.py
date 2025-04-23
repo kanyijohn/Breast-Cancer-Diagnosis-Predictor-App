@@ -27,7 +27,7 @@ def save_user(email, password):
                 users = {}
 
     if email in users:
-        st.warning("This email is already registered.")
+        st.warning("The email is already registered.")
         return False
 
     if not re.match(r"[^@]+@[^@]+\.[^@]+", email):
@@ -58,10 +58,11 @@ def authenticate_user(email, password):
 
 
 def login_ui():
-    st.title("🔐 Login or Sign Up")
-    choice = st.radio("Choose Action", ["Login", "Sign Up"])
+    st.title("Welcome")
+    
     email = st.text_input("Email")
     password = st.text_input("Password", type="password")
+    choice = st.radio("Choose Action", ["Login", "Sign Up"])
 
     if choice == "Sign Up":
         if st.button("Create Account"):
@@ -207,8 +208,8 @@ def main():
             st.markdown(f"<style>{f.read()}</style>", unsafe_allow_html=True)
 
     # Main App UI
-    st.title("🩺 Breast Cancer Diagnosis Predictor App")
-    st.write("Use the sidebar to input cell measurements and receive predictions using a trained ML model.")
+    st.title("Breast Cancer Diagnosis Predictor App")
+    st.write("Use the sidebar to input cell measurements collected and receive predictions.")
 
     input_data = add_sidebar()
 
