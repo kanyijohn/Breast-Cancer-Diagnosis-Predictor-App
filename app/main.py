@@ -3,60 +3,20 @@ import pickle
 import pandas as pd
 import plotly.graph_objects as go
 import numpy as np
-import json
 import os
-import bcrypt
-import re  # Email validation
+from auth_utils import (
+    create_user, authenticate_user, validate_password,
+    create_session, validate_session, delete_session,
+    verify_user
+)
 
 # -------------------- CONFIG --------------------
-USER_DB = "users.json"
 MODEL_PATH = "model/model.pkl"
 SCALER_PATH = "model/scaler.pkl"
 DATA_PATH = "data/data.csv"
 STYLE_PATH = "assets/style.css"
 
-
 # -------------------- AUTH SYSTEM --------------------
-def save_user(email, password):
-    users = {}
-    if os.path.exists(USER_DB):
-        with open(USER_DB, "r") as f:
-            try:
-                users = json.load(f)
-            except json.JSONDecodeError:
-                users = {}
-
-    if email in users:
-        st.warning("The email is already registered.")
-        return False
-
-    if not re.match(r"[^@]+@[^@]+\.[^@]+", email):
-        st.warning("Invalid email format.")
-        return False
-
-    hashed = bcrypt.hashpw(password.encode(), bcrypt.gensalt()).decode()
-    users[email] = hashed
-
-    with open(USER_DB, "w") as f:
-        json.dump(users, f)
-    return True
-
-
-def authenticate_user(email, password):
-    if not os.path.exists(USER_DB):
-        return False
-    with open(USER_DB, "r") as f:
-        try:
-            users = json.load(f)
-        except json.JSONDecodeError:
-            return False
-    stored_hashed = users.get(email)
-    if not stored_hashed:
-        return False
-    return bcrypt.checkpw(password.encode(), stored_hashed.encode())
-
-
-
 def login_ui():
     st.title("Welcome")
     
@@ -66,19 +26,32 @@ def login_ui():
 
     if choice == "Sign Up":
         if st.button("Create Account"):
-            if save_user(email, password):
-                st.success("Account created! Please log in.")
+            success, message = create_user(email, password)
+            if success:
+                st.success("Account created!")
+            else:
+                st.error(message)
     elif choice == "Login":
         if st.button("Login"):
-            if authenticate_user(email, password):
+            success, message, role = authenticate_user(email, password)
+            if success:
+                session_id = create_session(email)
+                st.session_state["session_id"] = session_id
                 st.session_state["authenticated"] = True
                 st.session_state["user"] = email
+                st.session_state["role"] = role
                 st.success(f"Welcome!")
                 st.success("Login successful!")
                 st.stop()
+                
             else:
-                st.error("Invalid email or password")
+                st.error(message)
 
+# -------------------- USER FUNCTIONS --------------------
+def user_panel():
+    st.title("User Panel")
+    st.write("User management functions will go here")
+    # You can expand this with actual user management functions
 
 # -------------------- ML APP FUNCTIONS --------------------
 def get_clean_data():
@@ -86,7 +59,6 @@ def get_clean_data():
     data = data.drop(['Unnamed: 32', 'id'], axis=1)
     data['diagnosis'] = data['diagnosis'].map({'M': 1, 'B': 0})
     return data
-
 
 def add_sidebar():
     st.sidebar.header("Cell Nuclei Measurements")
@@ -130,7 +102,6 @@ def add_sidebar():
         input_dict[key] = st.sidebar.slider(label, 0.0, float(data[key].max()), float(data[key].mean()))
     return input_dict
 
-
 def get_scaled_values(input_dict):
     data = get_clean_data()
     X = data.drop(['diagnosis'], axis=1)
@@ -141,63 +112,59 @@ def get_scaled_values(input_dict):
         scaled_dict[key] = (value - min_val) / (max_val - min_val)
     return scaled_dict
 
-
-
 def get_radar_chart(input_data):
-  
-  input_data = get_scaled_values(input_data)
-  
-  categories = ['Radius', 'Texture', 'Perimeter', 'Area', 
+    input_data = get_scaled_values(input_data)
+    
+    categories = ['Radius', 'Texture', 'Perimeter', 'Area', 
                 'Smoothness', 'Compactness', 
                 'Concavity', 'Concave Points',
                 'Symmetry', 'Fractal Dimension']
 
-  fig = go.Figure()
+    fig = go.Figure()
 
-  fig.add_trace(go.Scatterpolar(
-        r=[
-          input_data['radius_mean'], input_data['texture_mean'], input_data['perimeter_mean'],
-          input_data['area_mean'], input_data['smoothness_mean'], input_data['compactness_mean'],
-          input_data['concavity_mean'], input_data['concave points_mean'], input_data['symmetry_mean'],
-          input_data['fractal_dimension_mean']
-        ],
-        theta=categories,
-        fill='toself',
-        name='Mean Value'
-  ))
-  fig.add_trace(go.Scatterpolar(
-        r=[
-          input_data['radius_se'], input_data['texture_se'], input_data['perimeter_se'], input_data['area_se'],
-          input_data['smoothness_se'], input_data['compactness_se'], input_data['concavity_se'],
-          input_data['concave points_se'], input_data['symmetry_se'],input_data['fractal_dimension_se']
-        ],
-        theta=categories,
-        fill='toself',
-        name='Standard Error'
-  ))
-  fig.add_trace(go.Scatterpolar(
-        r=[
-          input_data['radius_worst'], input_data['texture_worst'], input_data['perimeter_worst'],
-          input_data['area_worst'], input_data['smoothness_worst'], input_data['compactness_worst'],
-          input_data['concavity_worst'], input_data['concave points_worst'], input_data['symmetry_worst'],
-          input_data['fractal_dimension_worst']
-        ],
-        theta=categories,
-        fill='toself',
-        name='Worst Value'
-  ))
+    fig.add_trace(go.Scatterpolar(
+            r=[
+            input_data['radius_mean'], input_data['texture_mean'], input_data['perimeter_mean'],
+            input_data['area_mean'], input_data['smoothness_mean'], input_data['compactness_mean'],
+            input_data['concavity_mean'], input_data['concave points_mean'], input_data['symmetry_mean'],
+            input_data['fractal_dimension_mean']
+            ],
+            theta=categories,
+            fill='toself',
+            name='Mean Value'
+    ))
+    fig.add_trace(go.Scatterpolar(
+            r=[
+            input_data['radius_se'], input_data['texture_se'], input_data['perimeter_se'], input_data['area_se'],
+            input_data['smoothness_se'], input_data['compactness_se'], input_data['concavity_se'],
+            input_data['concave points_se'], input_data['symmetry_se'],input_data['fractal_dimension_se']
+            ],
+            theta=categories,
+            fill='toself',
+            name='Standard Error'
+    ))
+    fig.add_trace(go.Scatterpolar(
+            r=[
+            input_data['radius_worst'], input_data['texture_worst'], input_data['perimeter_worst'],
+            input_data['area_worst'], input_data['smoothness_worst'], input_data['compactness_worst'],
+            input_data['concavity_worst'], input_data['concave points_worst'], input_data['symmetry_worst'],
+            input_data['fractal_dimension_worst']
+            ],
+            theta=categories,
+            fill='toself',
+            name='Worst Value'
+    ))
 
-  fig.update_layout(
-    polar=dict(
-      radialaxis=dict(
-        visible=True,
-        range=[0, 1]
-      )),
-    showlegend=True
-  )
-  
-  return fig
-
+    fig.update_layout(
+        polar=dict(
+        radialaxis=dict(
+            visible=True,
+            range=[0, 1]
+        )),
+        showlegend=True
+    )
+    
+    return fig
 
 def add_predictions(input_data):
     model = pickle.load(open(MODEL_PATH, "rb"))
@@ -216,44 +183,53 @@ def add_predictions(input_data):
     st.info(f"Probability (Malignant): {model.predict_proba(input_array_scaled)[0][1]:.2f}")
     st.caption("Note: This application is aimed to assist medical professionals in making breast cancer diagnosis, but should not be used as a substitute for a professional diagnosis")
 
-
 # -------------------- MAIN --------------------
 def main():
     st.set_page_config(page_title="🩺 Breast Cancer Diagnosis Predictor", layout="wide")
 
+    # Session management
+    if "session_id" in st.session_state:
+        is_valid, email = validate_session(st.session_state["session_id"])
+        if not is_valid:
+            st.session_state.clear()
+            st.experimental_rerun()
+
     if "authenticated" not in st.session_state:
         st.session_state["authenticated"] = False
 
-    if not st.session_state["authenticated"]:
+    if not st.session_state.get("authenticated", False):
         login_ui()
         return
-
-    # Show logout
-    with st.sidebar:
-        if st.button("Logout"):
-            st.session_state["authenticated"] = False
-            st.session_state["user"] = None
-            st.success("Logged out successfully!")
-            st.stop()
-
 
     # Load style
     if os.path.exists(STYLE_PATH):
         with open(STYLE_PATH) as f:
-             st.markdown("<style>{}</style>".format(f.read()), unsafe_allow_html=True)
-  
-    # Main App UI
-    st.title("Breast Cancer Diagnosis")
-    st.write("This app is build to help medical professionals in decision making to diagnose breast cancer in patients. It predicts using a machine learning model whether a breast mass is benign or malignant based on the cell measurements received from a breast tissue. The cell measurements are input and updated by hand using the sliders in the sidebar to receive predictions.")
+            st.markdown("<style>{}</style>".format(f.read()), unsafe_allow_html=True)
 
-    input_data = add_sidebar()
+    # Show logout
+    with st.sidebar:
+        st.write(f"Logged in as: {st.session_state['user']}")
+        if st.button("Logout"):
+            delete_session(st.session_state["session_id"])
+            st.session_state.clear()
+            st.success("Logged out successfully!")
+            st.stop()
 
-    col1, col2 = st.columns([4, 1])
-    with col1:
-        st.plotly_chart(get_radar_chart(input_data))
-    with col2:
-        add_predictions(input_data)
+    # Role-based routing
+    if st.session_state["role"] == "user":
+        user_panel()
+    else:
+        # Main App UI for medical professionals
+        st.title("Breast Cancer Diagnosis")
+        st.write("This app is build to help medical professionals in decision making to diagnose breast cancer in patients. It predicts using a machine learning model whether a breast mass is benign or malignant based on the cell measurements received from a breast tissue. The cell measurements are input and updated by hand using the sliders in the sidebar to receive predictions.")
 
+        input_data = add_sidebar()
+
+        col1, col2 = st.columns([4, 1])
+        with col1:
+            st.plotly_chart(get_radar_chart(input_data))
+        with col2:
+            add_predictions(input_data)
 
 if __name__ == "__main__":
     main()

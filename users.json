@@ -1,1 +1,9 @@
-{"mrkanyi8@gmail.com": "$2b$12$soEEs2DUej92/sgdt/0pYepnYE0Kqkg84PUsqqX0W6e4MMeJigxR2"}
+{
+    "mrkanyi8@gmail.com": {
+        "password": "$2b$12$0IPxxK.GFdBTqA8LSTDlH.sgsHKccq4qbCvwnd8GSsHc0QwITFBoq",
+        "role": "medical_pro",
+        "created_at": "2025-04-24T09:32:58.309373",
+        "last_login": "2025-04-24T21:30:24.517233",
+        "metadata": {}
+    }
+}
